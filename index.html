@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kızılay Aşevi - Playable Interstitial</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #78000c; /* Main color from the image */
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #ad-container {
+            width: 320px;
+            height: 480px;
+            background-color: #78000c;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .visible {
+            opacity: 1;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background-color: white;
+            color: #78000c;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Bowl CSS */
+        .bowl-container {
+            position: relative;
+            width: 160px;
+            height: 80px;
+            margin: 30px 0;
+        }
+
+        .bowl {
+            width: 160px;
+            height: 80px;
+            background-color: #f0f0f0;
+            border-radius: 0 0 80px 80px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .soup {
+            width: 140px;
+            height: 30px;
+            background-color: #d35400; /* Soup color */
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 2;
+            transition: top 0.3s;
+        }
+
+        .soup-body {
+            position: absolute;
+            bottom: 0;
+            left: 10px;
+            width: 140px;
+            height: 60px;
+            background-color: #d35400;
+            border-radius: 0 0 70px 70px;
+            z-index: 1;
+        }
+
+        .steam {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            width: 10px;
+            height: 30px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 10px;
+            animation: rise 2s infinite ease-out;
+            filter: blur(3px);
+        }
+
+        .steam:nth-child(2) { left: 40%; animation-delay: 0.5s; }
+        .steam:nth-child(3) { left: 60%; animation-delay: 1s; }
+
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-40px) scale(1.5); opacity: 0; }
+        }
+
+        /* Salt Shaker */
+        .shaker-container {
+            position: absolute;
+            top: -100px; /* Hidden initially */
+            right: 20px;
+            transition: top 0.5s;
+        }
+
+        .shaker {
+            width: 40px;
+            height: 60px;
+            background-color: #ddd;
+            border-radius: 10px 10px 5px 5px;
+            position: relative;
+            transform: rotate(-30deg);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .shaker::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 10%;
+            width: 80%;
+            height: 2px;
+            background: #bbb;
+        }
+
+        .shaker-top {
+             position: absolute;
+             top: -10px;
+             left: 5px;
+             width: 30px;
+             height: 10px;
+             background-color: #bbb;
+             border-radius: 5px 5px 0 0;
+        }
+
+        .salt-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: white;
+            border-radius: 50%;
+            top: 60px;
+            left: 0;
+            opacity: 0;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(100px); opacity: 0; }
+        }
+
+        /* Hand Hint */
+        .hand-hint {
+            position: absolute;
+            bottom: 100px;
+            right: 50px;
+            width: 50px;
+            height: 50px;
+            animation: tap 1.5s infinite;
+            pointer-events: none;
+            z-index: 100;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        @keyframes tap {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        /* Shake Animation */
+        .shake-anim {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(-30deg); }
+            25% { transform: rotate(-45deg); }
+            75% { transform: rotate(-15deg); }
+        }
+
+        .logo-text {
+            font-weight: 900;
+            font-size: 32px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+            width: 80%;
+        }
+
+        .price-tag {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="ad-container">
+        <!-- Screen 1: Intro -->
+        <div id="screen1" class="screen visible">
+            <div class="logo-text">KIZILAY</div>
+            <h1>AŞEVİ</h1>
+            <p>Sofralarda senin de<br>tuzun olsun.</p>
+            <div class="bowl-container">
+                <div class="bowl">
+                    <div class="soup"></div>
+                    <div class="soup-body"></div>
+                </div>
+                <div class="steam"></div>
+                <div class="steam"></div>
+                <div class="steam"></div>
+            </div>
+            <button class="btn" onclick="goToGame()">Çorbada Tuzun Olsun</button>
+        </div>
+
+        <!-- Screen 2: Game -->
+        <div id="screen2" class="screen hidden">
+            <h2>Tuz eklemek için dokun</h2>
+            <div class="bowl-container">
+                <div class="bowl">
+                    <div class="soup"></div>
+                    <div class="soup-body"></div>
+                </div>
+                <div class="steam"></div>
+                <div class="steam"></div>
+                <div class="steam"></div>
+            </div>
+
+            <div id="shaker-container" class="shaker-container">
+                <div id="shaker" class="shaker">
+                    <div class="shaker-top"></div>
+                </div>
+            </div>
+
+            <div class="hand-hint">
+                <svg viewBox="0 0 24 24" fill="white" width="100%" height="100%">
+                    <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-2.54-.63c-.54-.13-1.01-.25-1.47-.38V7.5c0-1.38-1.12-2.5-2.5-2.5S9.83 6.12 9.83 7.5v9.26l-1.83-1.83c-.13-.13-.3-.21-.49-.21-.2 0-.39.08-.53.22l-.56.59 4.34 4.34c.16.16.36.25.58.25h6.61c.64 0 1.15-.46 1.24-1.09l.66-4.63c.09-.64-.32-1.24-.96-1.4z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Screen 3: End Card -->
+        <div id="screen3" class="screen hidden">
+            <div class="logo-text">KIZILAY</div>
+            <h2>Teşekkürler!</h2>
+            <p>Desteğinle ihtiyaç sahiplerinin yüzü gülüyor.</p>
+
+            <div class="price-tag">
+                1 Öğün Bedeli: 180 TL
+            </div>
+            <div class="price-tag">
+                7 Öğün Bedeli: 1.260 TL
+            </div>
+
+            <a href="https://www.kizilay.org.tr/ms/asevi/" target="_blank" class="btn">Bağış Yap</a>
+        </div>
+    </div>
+
+    <script>
+        function goToGame() {
+            document.getElementById('screen1').classList.remove('visible');
+            document.getElementById('screen1').classList.add('hidden');
+
+            document.getElementById('screen2').classList.remove('hidden');
+            document.getElementById('screen2').classList.add('visible');
+
+            // Move shaker into view
+            setTimeout(() => {
+                document.getElementById('shaker-container').style.top = '120px';
+            }, 100);
+
+            // Add click listener to the whole screen
+            document.getElementById('screen2').addEventListener('click', addSalt);
+        }
+
+        let saltCount = 0;
+
+        function addSalt(e) {
+            const shaker = document.getElementById('shaker');
+            shaker.classList.add('shake-anim');
+
+            // Create salt particles
+            for(let i=0; i<10; i++) {
+                createSaltParticle();
+            }
+
+            setTimeout(() => {
+                shaker.classList.remove('shake-anim');
+            }, 500);
+
+            saltCount++;
+
+            if(saltCount >= 3) {
+                document.getElementById('screen2').removeEventListener('click', addSalt);
+                setTimeout(goToEndCard, 1500);
+            }
+        }
+
+        function createSaltParticle() {
+            const container = document.getElementById('shaker-container');
+            const particle = document.createElement('div');
+            particle.classList.add('salt-particle');
+
+            // Randomize position slightly
+            const randomX = Math.random() * 20;
+            particle.style.left = (10 + randomX) + 'px';
+
+            container.appendChild(particle);
+
+            // Animate
+            const animation = particle.animate([
+                { transform: 'translateY(0)', opacity: 1 },
+                { transform: `translateY(${100 + Math.random() * 50}px) translateX(${Math.random() * 20 - 10}px)`, opacity: 0 }
+            ], {
+                duration: 800 + Math.random() * 200,
+                easing: 'ease-in'
+            });
+
+            animation.onfinish = () => {
+                particle.remove();
+            };
+        }
+
+        function goToEndCard() {
+            document.getElementById('screen2').classList.remove('visible');
+            document.getElementById('screen2').classList.add('hidden');
+
+            document.getElementById('screen3').classList.remove('hidden');
+            document.getElementById('screen3').classList.add('visible');
+        }
+    </script>
+</body>
+</html>
